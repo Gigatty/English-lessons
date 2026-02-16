@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEP 五年级下册 · Duolingo-Style Audio Lessons</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #58cc02;
+  --green-dark: #46a302;
+  --green-light: #d7ffb8;
+  --blue: #1cb0f6;
+  --blue-dark: #0f8bc0;
+  --orange: #ff9600;
+  --red: #ff4b4b;
+  --purple: #ce82ff;
+  --gold: #ffc800;
+  --bg: #131f24;
+  --bg-card: #1a2b32;
+  --bg-surface: #233a44;
+  --text: #ffffff;
+  --text-dim: #93b0bc;
+  --text-muted: #5a7a88;
+  --border: #2b4450;
+  --radius: 16px;
+  --radius-sm: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══ HEADER ═══ */
+.app-header {
+  background: var(--bg-card);
+  border-bottom: 2px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-logo {
+  width: 40px; height: 40px;
+  background: var(--green);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 0 var(--green-dark);
+}
+.app-title { font-weight: 800; font-size: 18px; flex: 1; }
+.app-title span { color: var(--green); }
+.voice-status {
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.voice-status.ready { background: var(--green); color: #000; }
+.voice-status.loading { background: var(--orange); color: #000; }
+.voice-status.error { background: var(--red); color: #fff; }
+
+/* ═══ LAYOUT ═══ */
+.app-container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 20px 16px 120px;
+}
+
+/* ═══ UNIT SELECTOR ═══ */
+.unit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.unit-btn {
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.unit-btn:hover { border-color: var(--green); transform: translateY(-2px); }
+.unit-btn.active {
+  border-color: var(--green);
+  background: linear-gradient(135deg, rgba(88,204,2,0.15), rgba(88,204,2,0.05));
+  box-shadow: 0 0 20px rgba(88,204,2,0.1);
+}
+.unit-btn .unit-num {
+  font-size: 28px; font-weight: 900;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.unit-btn .unit-name {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-dim); margin-top: 4px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  line-height: 1.3;
+}
+
+/* ═══ LESSON SELECTOR ═══ */
+.lesson-tabs {
+  display: flex; gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.lesson-tabs::-webkit-scrollbar { display: none; }
+.lesson-tab {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border-radius: 30px;
+  border: 2px solid var(--border);
+  background: var(--bg-surface);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lesson-tab:hover { border-color: var(--text-dim); }
+.lesson-tab.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #000;
+  box-shadow: 0 4px 0 var(--green-dark);
+}
+
+/* ═══ PLAYER CARD ═══ */
+.player-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.player-header {
+  padding: 24px 24px 0;
+  display: flex; align-items: center; gap: 14px;
+}
+.player-icon {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+}
+.player-meta { flex: 1; }
+.player-meta h2 { font-size: 18px; font-weight: 800; }
+.player-meta .player-sub {
+  font-size: 12px; color: var(--text-dim); font-weight: 600; margin-top: 2px;
+}
+
+/* ═══ NOW PLAYING ═══ */
+.now-playing {
+  padding: 20px 24px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.np-step {
+  font-size: 11px; font-weight: 800;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.np-english {
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.3;
+  transition: opacity 0.3s;
+}
+.np-chinese {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: clamp(14px, 2.5vw, 17px);
+  color: var(--text-dim);
+  font-weight: 500;
+  transition: opacity 0.3s;
+}
+.np-phonetic {
+  font-size: 13px;
+  color: var(--purple);
+  font-weight: 600;
+  margin-top: 4px;
+}
+.np-instruction {
+  font-size: 13px;
+  color: var(--orange);
+  font-weight: 700;
+  margin-top: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ═══ PROGRESS BAR ═══ */
+.progress-wrap {
+  padding: 0 24px 4px;
+}
+.progress-bar {
+  height: 10px;
+  background: var(--bg-surface);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--blue));
+  border-radius: 10px;
+  transition: width 0.4s ease;
+  width: 0%;
+  position: relative;
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 12px; height: 100%;
+  background: rgba(255,255,255,0.3);
+  border-radius: 0 10px 10px 0;
+}
+.progress-text {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text-muted);
+  font-weight: 700; padding: 6px 0 16px;
+}
+
+/* ═══ CONTROLS ═══ */
+.controls {
+  padding: 0 24px 24px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+.ctrl-btn {
+  border: none; border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  transition: all 0.15s;
+}
+.ctrl-btn:active { transform: scale(0.92); }
+.ctrl-sm {
+  width: 48px; height: 48px; font-size: 18px;
+  background: var(--bg-surface);
+  color: var(--text-dim);
+  border: 2px solid var(--border);
+}
+.ctrl-sm:hover { border-color: var(--text-dim); color: var(--text); }
+.ctrl-play {
+  width: 72px; height: 72px; font-size: 28px;
+  background: var(--green);
+  color: #1a3a00;
+  box-shadow: 0 6px 0 var(--green-dark);
+}
+.ctrl-play:hover { background: #64de07; }
+.ctrl-play.playing {
+  background: var(--orange);
+  box-shadow: 0 6px 0 #c77600;
+}
+.ctrl-play.playing:hover { background: #ffaa22; }
+
+/* ═══ SPEED SELECTOR ═══ */
+.speed-row {
+  display: flex; gap: 6px; justify-content: center;
+  padding: 0 24px 20px;
+}
+.speed-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  background: transparent;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px; font-weight: 800;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.speed-btn:hover { border-color: var(--text-dim); }
+.speed-btn.active {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+
+/* ═══ SCRIPT VIEW ═══ */
+.script-toggle {
+  display: flex; justify-content: center;
+  padding: 0 24px 20px;
+}
+.script-toggle button {
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.script-toggle button:hover { border-color: var(--text-dim); }
+.script-list {
+  display: none;
+  padding: 0 24px 24px;
+}
+.script-list.show { display: block; }
+.script-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 8px;
+  padding: 10px 8px;
+}
+.script-item:hover { background: var(--bg-surface); }
+.script-item.current { background: rgba(88,204,2,0.1); }
+.script-idx {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.script-item.current .script-idx {
+  background: var(--green);
+  color: #000;
+}
+.script-text-en { font-size: 14px; font-weight: 700; }
+.script-text-cn {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 12px; color: var(--text-dim); margin-top: 2px;
+}
+
+/* ═══ IDLE STATE ═══ */
+.idle-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+.idle-state .owl { font-size: 64px; margin-bottom: 16px; }
+.idle-state h3 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.idle-state p { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+
+/* ═══ WAVE ANIMATION ═══ */
+.wave-bars {
+  display: flex; gap: 3px;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  margin-bottom: 8px;
+}
+.wave-bars.hidden { display: none; }
+.wave-bar {
+  width: 4px;
+  background: var(--green);
+  border-radius: 4px;
+  animation: wave 0.8s ease-in-out infinite;
+}
+.wave-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+.wave-bar:nth-child(2) { height: 16px; animation-delay: 0.1s; }
+.wave-bar:nth-child(3) { height: 24px; animation-delay: 0.2s; }
+.wave-bar:nth-child(4) { height: 16px; animation-delay: 0.3s; }
+.wave-bar:nth-child(5) { height: 8px; animation-delay: 0.4s; }
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 480px) {
+  .unit-grid { grid-template-columns: repeat(2, 1fr); }
+  .controls { gap: 10px; }
+  .ctrl-play { width: 64px; height: 64px; font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-logo">🦉</div>
+  <div class="app-title">PEP Audio <span>Lessons</span></div>
+  <div class="voice-status loading" id="voiceStatus">LOADING</div>
+</div>
+
+<div class="app-container">
+
+  <!-- UNIT SELECTOR -->
+  <div class="unit-grid" id="unitGrid"></div>
+
+  <!-- LESSON TABS -->
+  <div class="lesson-tabs" id="lessonTabs"></div>
+
+  <!-- PLAYER CARD -->
+  <div class="player-card" id="playerCard">
+    <div class="player-header">
+      <div class="player-icon" id="playerIcon" style="background: linear-gradient(135deg, var(--green), #38a802);">🎧</div>
+      <div class="player-meta">
+        <h2 id="playerTitle">Select a lesson</h2>
+        <div class="player-sub" id="playerSub">Choose a unit and lesson to begin</div>
+      </div>
+    </div>
+
+    <div class="now-playing" id="nowPlaying">
+      <div class="idle-state" id="idleState">
+        <div class="owl">🦉</div>
+        <h3>Ready to learn?</h3>
+        <p>Pick a unit above, then press play!<br>Each lesson includes vocabulary, dialogues, and practice drills — just like Duolingo.</p>
+      </div>
+      <div class="wave-bars hidden" id="waveBars">
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      </div>
+      <div class="np-step" id="npStep" style="display:none;"></div>
+      <div class="np-english" id="npEnglish" style="display:none;"></div>
+      <div class="np-chinese" id="npChinese" style="display:none;"></div>
+      <div class="np-phonetic" id="npPhonetic" style="display:none;"></div>
+      <div class="np-instruction" id="npInstruction" style="display:none;"></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text">
+        <span id="progressCurrent">0 / 0</span>
+        <span id="progressPct">0%</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn ctrl-sm" onclick="skipPrev()" title="Previous">⏮</button>
+      <button class="ctrl-btn ctrl-sm" onclick="replayCurrent()" title="Replay">🔄</button>
+      <button class="ctrl-btn ctrl-play" id="playBtn" onclick="togglePlay()">▶</button>
+      <button class="ctrl-btn ctrl-sm" onclick="skipNext()" title="Skip">⏭</button>
+      <button class="ctrl-btn ctrl-sm" onclick="stopPlay()" title="Stop">⏹</button>
+    </div>
+
+    <div class="speed-row">
+      <button class="speed-btn" onclick="setSpeed(0.7)" data-speed="0.7">0.7×</button>
+      <button class="speed-btn active" onclick="setSpeed(0.85)" data-speed="0.85">0.85×</button>
+      <button class="speed-btn" onclick="setSpeed(1)" data-speed="1">1×</button>
+      <button class="speed-btn" onclick="setSpeed(1.2)" data-speed="1.2">1.2×</button>
+    </div>
+
+    <div class="script-toggle">
+      <button onclick="toggleScript()">📜 Show Full Script</button>
+    </div>
+    <div class="script-list" id="scriptList"></div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// LESSON DATA — PEP Grade 5 Volume 2 (Duolingo structure)
+// ═══════════════════════════════════════════════════════════
+
+const UNITS = [
+  { id: 1, name: "Following the Rules", cn: "遵守规则", color: "#ff9600" },
+  { id: 2, name: "Our Community", cn: "我们的社区", color: "#58cc02" },
+  { id: 3, name: "Life in Seasons", cn: "不同季节的生活", color: "#1cb0f6" },
+  { id: 4, name: "My Hometown", cn: "我的家乡", color: "#ce82ff" },
+  { id: 5, name: "Travelling Around", cn: "出行方式", color: "#ff9600" },
+  { id: 6, name: "Making a Travel Plan", cn: "制定旅行计划", color: "#ff4b4b" },
+];
+
+// Each step: { type, en, cn, phonetic?, instruction? }
+// Types: "title", "vocab", "sentence", "dialogue", "repeat", "pause", "quiz"
+
+function buildLessons(unitId) {
+  const data = LESSON_DATA[unitId];
+  if (!data) return {};
+  return data;
+}
+
+const LESSON_DATA = {
+  1: {
+    "Vocabulary": [
+      { type:"title", en:"Unit 1 — Vocabulary Drill", cn:"第一单元 — 词汇训练" },
+      { type:"vocab", en:"must", cn:"必须", phonetic:"/mʌst/" },
+      { type:"sentence", en:"You must stay in the bus.", cn:"你们必须待在车上。" },
+      { type:"repeat", en:"You must stay in the bus.", cn:"请跟读", instruction:"🎤 Now you say it!" },
+      { type:"pause" },
+      { type:"vocab", en:"sir", cn:"先生", phonetic:"/sɜːr/" },
+      { type:"sentence", en:"Yes, sir.", cn:"好的，先生。" },
+      { type:"repeat", en:"Yes, sir.", cn:"请跟读", instruction:"🎤 Repeat after me!" },
+      { type:"pause" },
+      { type:"vocab", en:"inside", cn:"在……里面", phonetic:"/ɪnˈsaɪd/" },
+      { type:"sentence", en:"Keep your hands inside the bus.", cn:"把手放在车内。" },
+      { type:"pause" },
+      { type:"vocab", en:"scare", cn:"惊吓；使害怕", phonetic:"/skeər/" },
+      { type:"sentence", en:"Please don't scare the animals.", cn:"请不要吓到动物。" },
+      { type:"repeat", en:"Please don't scare the animals.", cn:"请跟读", instruction:"🎤 Your turn!" },
+      { type:"pause" },
+      { type:"vocab", en:"password", cn:"密码", phonetic:"/ˈpɑːswɜːd/" },
+      { type:"sentence", en:"Don't give out your password.", cn:"不要泄露你的密码。" },
+      { type:"pause" },
+      { type:"vocab", en:"line", cn:"队伍；行列", phonetic:"/laɪn/" },
+      { type:"vocab", en:"wait", cn:"等待；等候", phonetic:"/weɪt/" },
+      { type:"sentence", en:"Please stand in line and wait.", cn:"请排好队等候。" },
+      { type:"repeat", en:"Please stand in line and wait.", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"pause" },
+      { type:"vocab", en:"guard", cn:"门卫；看守", phonetic:"/ɡɑːd/" },
+      { type:"vocab", en:"shout", cn:"大声说；叫", phonetic:"/ʃaʊt/" },
+      { type:"sentence", en:"No shouting!", cn:"不要大声喊叫！" },
+      { type:"title", en:"Great job! Now let's review.", cn:"太棒了！现在来复习。" },
+      { type:"quiz", en:"How do you say 密码 in English?", cn:"password", instruction:"💡 Answer: password" },
+      { type:"quiz", en:"How do you say 等待 in English?", cn:"wait", instruction:"💡 Answer: wait" },
+      { type:"quiz", en:"How do you say 队伍 in English?", cn:"line", instruction:"💡 Answer: line" },
+      { type:"title", en:"Vocabulary complete! Well done!", cn:"词汇训练完成！做得好！" },
+    ],
+    "Dialogue A": [
+      { type:"title", en:"Unit 1 Part A — Animal Park Rules", cn:"第一单元 A部分 — 动物园规则" },
+      { type:"sentence", en:"Listen to the dialogue carefully.", cn:"请仔细听对话。" },
+      { type:"pause" },
+      { type:"dialogue", en:"Welcome everyone. Listen carefully: You must stay in the bus. Don't go outside.", cn:"欢迎大家。请仔细听：你们必须待在车上。不要出去。", speaker:"Guide" },
+      { type:"dialogue", en:"Yes, sir. Can we touch the animals?", cn:"好的，先生。我们可以摸动物吗？", speaker:"Mike" },
+      { type:"dialogue", en:"No. Don't touch the animals. You must keep your hands inside the bus.", cn:"不可以。不要摸动物。你们必须把手放在车里。", speaker:"Guide" },
+      { type:"dialogue", en:"Can we give bananas to the monkeys?", cn:"我们可以给猴子香蕉吗？", speaker:"Chen Jie" },
+      { type:"dialogue", en:"No. You shouldn't feed the animals.", cn:"不可以。你们不应该喂动物。", speaker:"Guide" },
+      { type:"dialogue", en:"OK.", cn:"好的。", speaker:"Chen Jie" },
+      { type:"dialogue", en:"You must also keep quiet. Please don't scare the animals.", cn:"你们也必须保持安静。请不要吓到动物。", speaker:"Guide" },
+      { type:"dialogue", en:"No problem.", cn:"没问题。", speaker:"Mike" },
+      { type:"dialogue", en:"Great! Let's go!", cn:"太好了！我们走吧！", speaker:"Guide" },
+      { type:"pause" },
+      { type:"title", en:"Now, let's practice the key sentences.", cn:"现在，来练习重点句型。" },
+      { type:"sentence", en:"You must stay in the bus.", cn:"你们必须待在车上。" },
+      { type:"repeat", en:"You must stay in the bus.", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"sentence", en:"Don't touch the animals.", cn:"不要摸动物。" },
+      { type:"repeat", en:"Don't touch the animals.", cn:"请跟读", instruction:"🎤 Your turn!" },
+      { type:"sentence", en:"You shouldn't feed the animals.", cn:"你们不应该喂动物。" },
+      { type:"repeat", en:"You shouldn't feed the animals.", cn:"请跟读", instruction:"🎤 Say it!" },
+      { type:"title", en:"Excellent! Dialogue A complete!", cn:"太棒了！A部分对话完成！" },
+    ],
+    "Dialogue B": [
+      { type:"title", en:"Unit 1 Part B — At the Museum", cn:"第一单元 B部分 — 在博物馆" },
+      { type:"sentence", en:"Listen to the dialogue.", cn:"请听对话。" },
+      { type:"pause" },
+      { type:"dialogue", en:"Oh no! The line is so long.", cn:"哦不！队伍好长啊。", speaker:"Sam" },
+      { type:"dialogue", en:"Yes. Everyone should take their turn. We must wait.", cn:"是的。每个人都应该排队等候。我们必须等。", speaker:"Sarah" },
+      { type:"dialogue", en:"Look! What's the guard doing?", cn:"看！那个保安在做什么？", speaker:"Sam" },
+      { type:"dialogue", en:"He's telling people what to do.", cn:"他在告诉人们该怎么做。", speaker:"Sarah" },
+      { type:"dialogue", en:"Please stand in line. No shouting. Thank you.", cn:"请站好队。不要大声喊叫。谢谢。", speaker:"Guard" },
+      { type:"dialogue", en:"Is he coming over here?", cn:"他走过来了吗？", speaker:"Sam" },
+      { type:"dialogue", en:"Yes, he is.", cn:"是的。", speaker:"Sarah" },
+      { type:"dialogue", en:"Please talk quietly, kids.", cn:"孩子们，请小声说话。", speaker:"Guard" },
+      { type:"dialogue", en:"Yes, sir.", cn:"好的，先生。", speaker:"Sam" },
+      { type:"pause" },
+      { type:"sentence", en:"Everyone should take their turn.", cn:"每个人都应该轮流。" },
+      { type:"repeat", en:"Everyone should take their turn.", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"sentence", en:"Please stand in line.", cn:"请排好队。" },
+      { type:"repeat", en:"Please stand in line.", cn:"请跟读", instruction:"🎤 Your turn!" },
+      { type:"title", en:"Unit 1 complete! Amazing work!", cn:"第一单元完成！太厉害了！" },
+    ],
+  },
+  2: {
+    "Vocabulary": [
+      { type:"title", en:"Unit 2 — Vocabulary Drill", cn:"第二单元 — 词汇训练" },
+      { type:"vocab", en:"along", cn:"沿着；顺着", phonetic:"/əˈlɒŋ/" },
+      { type:"sentence", en:"Walk along this street.", cn:"沿着这条街走。" },
+      { type:"repeat", en:"Walk along this street.", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"pause" },
+      { type:"vocab", en:"street", cn:"大街；街道", phonetic:"/striːt/" },
+      { type:"vocab", en:"station", cn:"局；所；站", phonetic:"/ˈsteɪʃn/" },
+      { type:"sentence", en:"Turn right at the police station.", cn:"在警察局右转。" },
+      { type:"repeat", en:"Turn right at the police station.", cn:"请跟读", instruction:"🎤 Your turn!" },
+      { type:"pause" },
+      { type:"vocab", en:"cinema", cn:"电影院", phonetic:"/ˈsɪnəmə/" },
+      { type:"vocab", en:"between", cn:"在……中间", phonetic:"/bɪˈtwiːn/" },
+      { type:"vocab", en:"behind", cn:"在……的后面", phonetic:"/bɪˈhaɪnd/" },
+      { type:"vocab", en:"next", cn:"紧邻；紧接着", phonetic:"/nekst/" },
+      { type:"vocab", en:"far", cn:"远的；较远的", phonetic:"/fɑːr/" },
+      { type:"vocab", en:"left", cn:"向左；左边", phonetic:"/left/" },
+      { type:"pause" },
+      { type:"vocab", en:"teach", cn:"教（课程）", phonetic:"/tiːtʃ/" },
+      { type:"vocab", en:"litter", cn:"垃圾；废弃物", phonetic:"/ˈlɪtər/" },
+      { type:"vocab", en:"recycle", cn:"回收利用", phonetic:"/riːˈsaɪkl/" },
+      { type:"vocab", en:"artist", cn:"艺术家；画家", phonetic:"/ˈɑːtɪst/" },
+      { type:"vocab", en:"scientist", cn:"科学家", phonetic:"/ˈsaɪəntɪst/" },
+      { type:"vocab", en:"volunteer", cn:"志愿者", phonetic:"/ˌvɒlənˈtɪər/" },
+      { type:"pause" },
+      { type:"quiz", en:"How do you say 电影院 in English?", cn:"cinema", instruction:"💡 Answer: cinema" },
+      { type:"quiz", en:"How do you say 志愿者 in English?", cn:"volunteer", instruction:"💡 Answer: volunteer" },
+      { type:"title", en:"Vocabulary complete!", cn:"词汇训练完成！" },
+    ],
+    "Dialogue A": [
+      { type:"title", en:"Unit 2 Part A — Finding Places", cn:"第二单元 A部分 — 问路" },
+      { type:"pause" },
+      { type:"dialogue", en:"Excuse me. Can you help me please?", cn:"打扰一下，你能帮帮我吗？", speaker:"Boy" },
+      { type:"dialogue", en:"Sure.", cn:"当然。", speaker:"Amy" },
+      { type:"dialogue", en:"Thank you. Is there a bookshop near here?", cn:"谢谢。这附近有书店吗？", speaker:"Boy" },
+      { type:"dialogue", en:"Yes, there is. Walk along this street. Turn right at the police station. The bookshop is on your right.", cn:"有的。沿着这条街走，在警察局右转。书店在你的右边。", speaker:"Amy" },
+      { type:"dialogue", en:"Thank you. Is there also a library near here?", cn:"谢谢。这附近也有图书馆吗？", speaker:"Boy" },
+      { type:"dialogue", en:"No, there isn't. But there is a big one next to the park. It's a little far.", cn:"没有。但公园旁边有一个大的。有点远。", speaker:"Amy" },
+      { type:"dialogue", en:"OK. Thank you!", cn:"好的，谢谢你！", speaker:"Boy" },
+      { type:"pause" },
+      { type:"sentence", en:"Is there a bookshop near here?", cn:"这附近有书店吗？" },
+      { type:"repeat", en:"Is there a bookshop near here?", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"sentence", en:"Walk along this street. Turn right at the police station.", cn:"沿着这条街走。在警察局右转。" },
+      { type:"repeat", en:"Walk along this street. Turn right at the police station.", cn:"请跟读", instruction:"🎤 Your turn!" },
+      { type:"title", en:"Dialogue A complete!", cn:"A部分对话完成！" },
+    ],
+    "Dialogue B": [
+      { type:"title", en:"Unit 2 Part B — Community Helpers", cn:"第二单元 B部分 — 社区工作者" },
+      { type:"pause" },
+      { type:"dialogue", en:"There's Miss Ma! She's my teacher.", cn:"那是马老师！她是我的老师。", speaker:"Sarah" },
+      { type:"dialogue", en:"What does she teach?", cn:"她教什么？", speaker:"Sam" },
+      { type:"dialogue", en:"She teaches maths.", cn:"她教数学。", speaker:"Sarah" },
+      { type:"dialogue", en:"What's she doing?", cn:"她在做什么？", speaker:"Sam" },
+      { type:"dialogue", en:"She's picking up litter. We can recycle a lot of litter.", cn:"她在捡垃圾。我们可以回收很多垃圾。", speaker:"Sarah" },
+      { type:"dialogue", en:"Yes. Mr Zhang recycles things too.", cn:"是的。张先生也回收东西。", speaker:"Sam" },
+      { type:"dialogue", en:"Who's Mr Zhang? What does he do?", cn:"张先生是谁？他是做什么工作的？", speaker:"Sarah" },
+      { type:"dialogue", en:"He's a street cleaner. I see him every morning.", cn:"他是清洁工。我每天早上都能看到他。", speaker:"Sam" },
+      { type:"dialogue", en:"That's an important job!", cn:"那是一份重要的工作！", speaker:"Sarah" },
+      { type:"pause" },
+      { type:"sentence", en:"What does she teach? She teaches maths.", cn:"她教什么？她教数学。" },
+      { type:"repeat", en:"What does she teach? She teaches maths.", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"title", en:"Unit 2 complete!", cn:"第二单元完成！" },
+    ],
+  },
+  3: {
+    "Vocabulary": [
+      { type:"title", en:"Unit 3 — Months & Seasons", cn:"第三单元 — 月份与季节" },
+      { type:"vocab", en:"January", cn:"一月", phonetic:"/ˈdʒænjuəri/" },
+      { type:"vocab", en:"February", cn:"二月", phonetic:"/ˈfebruəri/" },
+      { type:"vocab", en:"March", cn:"三月", phonetic:"/mɑːtʃ/" },
+      { type:"vocab", en:"April", cn:"四月", phonetic:"/ˈeɪprəl/" },
+      { type:"vocab", en:"May", cn:"五月", phonetic:"/meɪ/" },
+      { type:"vocab", en:"June", cn:"六月", phonetic:"/dʒuːn/" },
+      { type:"pause" },
+      { type:"vocab", en:"July", cn:"七月", phonetic:"/dʒuˈlaɪ/" },
+      { type:"vocab", en:"August", cn:"八月", phonetic:"/ˈɔːɡəst/" },
+      { type:"vocab", en:"September", cn:"九月", phonetic:"/sepˈtembər/" },
+      { type:"vocab", en:"October", cn:"十月", phonetic:"/ɒkˈtəʊbər/" },
+      { type:"vocab", en:"November", cn:"十一月", phonetic:"/nəʊˈvembər/" },
+      { type:"vocab", en:"December", cn:"十二月", phonetic:"/dɪˈsembər/" },
+      { type:"pause" },
+      { type:"vocab", en:"skate", cn:"滑冰；溜冰", phonetic:"/skeɪt/" },
+      { type:"vocab", en:"holiday", cn:"假期", phonetic:"/ˈhɒlədeɪ/" },
+      { type:"vocab", en:"celebrate", cn:"庆祝", phonetic:"/ˈselɪbreɪt/" },
+      { type:"vocab", en:"party", cn:"聚会", phonetic:"/ˈpɑːti/" },
+      { type:"quiz", en:"How do you say 八月 in English?", cn:"August", instruction:"💡 Answer: August" },
+      { type:"quiz", en:"How do you say 庆祝 in English?", cn:"celebrate", instruction:"💡 Answer: celebrate" },
+      { type:"title", en:"Vocabulary complete!", cn:"词汇训练完成！" },
+    ],
+    "Dialogue A": [
+      { type:"title", en:"Unit 3 Part A — Favourite Seasons", cn:"第三单元 A部分 — 最喜欢的季节" },
+      { type:"pause" },
+      { type:"dialogue", en:"Which season do you like the best, children?", cn:"孩子们，你们最喜欢哪个季节？", speaker:"Mrs Green" },
+      { type:"dialogue", en:"I like spring the best. The weather is nice. I often fly a kite with my father in the park.", cn:"我最喜欢春天。天气很好。我经常和爸爸在公园里放风筝。", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"That's nice! What about you, Oliver?", cn:"真不错！你呢，Oliver？", speaker:"Mrs Green" },
+      { type:"dialogue", en:"I like summer the best. I enjoy swimming in the sea.", cn:"我最喜欢夏天。我喜欢在海里游泳。", speaker:"Oliver" },
+      { type:"dialogue", en:"I like winter the best. It snows a lot in Canada. In January and February, I often skate on the lake.", cn:"我最喜欢冬天。加拿大经常下雪。一月和二月，我经常在湖上溜冰。", speaker:"Mike" },
+      { type:"dialogue", en:"It's warm in January and February in Australia.", cn:"在澳大利亚，一月和二月是暖和的。", speaker:"Oliver" },
+      { type:"dialogue", en:"Really? That's interesting!", cn:"真的吗？太有趣了！", speaker:"Zhang Peng" },
+      { type:"pause" },
+      { type:"sentence", en:"Which season do you like the best?", cn:"你最喜欢哪个季节？" },
+      { type:"repeat", en:"Which season do you like the best?", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"sentence", en:"I like spring the best.", cn:"我最喜欢春天。" },
+      { type:"repeat", en:"I like spring the best.", cn:"请跟读", instruction:"🎤 Your turn!" },
+      { type:"title", en:"Dialogue A complete!", cn:"A部分对话完成！" },
+    ],
+    "Dialogue B": [
+      { type:"title", en:"Unit 3 Part B — Festivals", cn:"第三单元 B部分 — 节日" },
+      { type:"pause" },
+      { type:"dialogue", en:"Class, what's the best time of year?", cn:"同学们，一年中最好的时候是什么时候？", speaker:"Mrs Green" },
+      { type:"dialogue", en:"I think it's autumn.", cn:"我觉得是秋天。", speaker:"John" },
+      { type:"dialogue", en:"Yes. There are great festivals in autumn. I love the Mid-Autumn Festival. Mooncakes are delicious.", cn:"是的。秋天有很多好的节日。我喜欢中秋节。月饼很好吃。", speaker:"Binbin" },
+      { type:"dialogue", en:"I like Dongzhi. I love dumplings.", cn:"我喜欢冬至。我喜欢饺子。", speaker:"Liu Jia" },
+      { type:"dialogue", en:"When's Dongzhi?", cn:"冬至是什么时候？", speaker:"Mike" },
+      { type:"dialogue", en:"It's in winter. We celebrate Dongzhi in late December.", cn:"在冬天。我们在十二月下旬庆祝冬至。", speaker:"Liu Jia" },
+      { type:"dialogue", en:"We celebrate Christmas in December too. My mother cooks turkey. And my father puts up a big Christmas tree.", cn:"我们也在十二月庆祝圣诞节。我妈妈做火鸡。我爸爸立一棵大圣诞树。", speaker:"Amy" },
+      { type:"dialogue", en:"Great!", cn:"太好了！", speaker:"Mrs Green" },
+      { type:"pause" },
+      { type:"sentence", en:"We celebrate Dongzhi in late December.", cn:"我们在十二月下旬庆祝冬至。" },
+      { type:"repeat", en:"We celebrate Dongzhi in late December.", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"title", en:"Unit 3 complete!", cn:"第三单元完成！" },
+    ],
+  },
+  4: {
+    "Vocabulary": [
+      { type:"title", en:"Unit 4 — Vocabulary Drill", cn:"第四单元 — 词汇训练" },
+      { type:"vocab", en:"hometown", cn:"家乡；故乡", phonetic:"/ˈhəʊmtaʊn/" },
+      { type:"vocab", en:"common", cn:"共同的", phonetic:"/ˈkɒmən/" },
+      { type:"vocab", en:"beach", cn:"海滩；沙滩", phonetic:"/biːtʃ/" },
+      { type:"vocab", en:"desert", cn:"沙漠", phonetic:"/ˈdezət/" },
+      { type:"vocab", en:"grassland", cn:"草原", phonetic:"/ˈɡrɑːslænd/" },
+      { type:"pause" },
+      { type:"vocab", en:"special", cn:"特别的", phonetic:"/ˈspeʃl/" },
+      { type:"vocab", en:"wild", cn:"野生的", phonetic:"/waɪld/" },
+      { type:"vocab", en:"kangaroo", cn:"袋鼠", phonetic:"/ˌkæŋɡəˈruː/" },
+      { type:"vocab", en:"koala", cn:"考拉", phonetic:"/kəʊˈɑːlə/" },
+      { type:"vocab", en:"island", cn:"岛；岛屿", phonetic:"/ˈaɪlənd/" },
+      { type:"vocab", en:"wish", cn:"希望", phonetic:"/wɪʃ/" },
+      { type:"pause" },
+      { type:"quiz", en:"How do you say 家乡 in English?", cn:"hometown", instruction:"💡 Answer: hometown" },
+      { type:"quiz", en:"How do you say 袋鼠 in English?", cn:"kangaroo", instruction:"💡 Answer: kangaroo" },
+      { type:"title", en:"Vocabulary complete!", cn:"词汇训练完成！" },
+    ],
+    "Dialogue A": [
+      { type:"title", en:"Unit 4 Part A — Famous Places in China", cn:"第四单元 A部分 — 中国名胜" },
+      { type:"pause" },
+      { type:"dialogue", en:"Where is your hometown, Zhang Peng?", cn:"张鹏，你的家乡在哪里？", speaker:"Oliver" },
+      { type:"dialogue", en:"I'm from Qufu in Shandong.", cn:"我来自山东曲阜。", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"What's your hometown famous for?", cn:"你的家乡因什么而出名？", speaker:"Oliver" },
+      { type:"dialogue", en:"It's the home of Confucius.", cn:"那里是孔子的故乡。", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"Oh wow! What are some other famous places in China?", cn:"哇！中国还有哪些著名的地方？", speaker:"Oliver" },
+      { type:"dialogue", en:"China has many famous places. Sichuan is famous for its pandas.", cn:"中国有很多著名的地方。四川以大熊猫闻名。", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"Guangxi is famous for mountains and rivers. And Yunnan has beautiful forests.", cn:"广西以山水闻名。云南有美丽的森林。", speaker:"Binbin" },
+      { type:"dialogue", en:"But all of the places in China have one thing in common.", cn:"但中国所有的地方都有一个共同点。", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"What's that?", cn:"是什么？", speaker:"Oliver" },
+      { type:"dialogue", en:"They all have friendly people!", cn:"那里都有友好的人民！", speaker:"Zhang Peng" },
+      { type:"pause" },
+      { type:"sentence", en:"What's your hometown famous for?", cn:"你的家乡因什么而出名？" },
+      { type:"repeat", en:"What's your hometown famous for?", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"sentence", en:"Sichuan is famous for its pandas.", cn:"四川以大熊猫闻名。" },
+      { type:"repeat", en:"Sichuan is famous for its pandas.", cn:"请跟读", instruction:"🎤 Your turn!" },
+      { type:"title", en:"Dialogue A complete!", cn:"A部分对话完成！" },
+    ],
+    "Dialogue B": [
+      { type:"title", en:"Unit 4 Part B — Countries of the World", cn:"第四单元 B部分 — 世界各国" },
+      { type:"pause" },
+      { type:"dialogue", en:"Oliver, you come from Australia, don't you?", cn:"Oliver，你来自澳大利亚，对吧？", speaker:"Sarah" },
+      { type:"dialogue", en:"Yes, I do.", cn:"是的。", speaker:"Oliver" },
+      { type:"dialogue", en:"What makes Australia special?", cn:"澳大利亚有什么特别的？", speaker:"Sarah" },
+      { type:"dialogue", en:"The good weather and beautiful beaches.", cn:"好天气和美丽的海滩。", speaker:"Oliver" },
+      { type:"dialogue", en:"Australia also has many wild animals. It's famous for its kangaroos and koalas.", cn:"澳大利亚也有很多野生动物。那里以袋鼠和考拉闻名。", speaker:"Mike" },
+      { type:"dialogue", en:"That's right. But I wish I could visit India. It's so colourful, and there are many interesting festivals.", cn:"没错。但我希望能去印度。那里多姿多彩，有很多有趣的节日。", speaker:"Oliver" },
+      { type:"dialogue", en:"That sounds great. I really want to go to Italy this year.", cn:"听起来太棒了。我今年真的想去意大利。", speaker:"Sarah" },
+      { type:"dialogue", en:"What makes Italy special?", cn:"意大利有什么特别的？", speaker:"Oliver" },
+      { type:"dialogue", en:"Food and football!", cn:"美食和足球！", speaker:"Sarah" },
+      { type:"pause" },
+      { type:"sentence", en:"What makes Australia special?", cn:"澳大利亚有什么特别的？" },
+      { type:"repeat", en:"What makes Australia special?", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"title", en:"Unit 4 complete!", cn:"第四单元完成！" },
+    ],
+  },
+  5: {
+    "Vocabulary": [
+      { type:"title", en:"Unit 5 — Vocabulary Drill", cn:"第五单元 — 词汇训练" },
+      { type:"vocab", en:"early", cn:"早到的", phonetic:"/ˈɜːli/" },
+      { type:"vocab", en:"underground", cn:"地铁", phonetic:"/ˈʌndəɡraʊnd/" },
+      { type:"vocab", en:"bike", cn:"自行车", phonetic:"/baɪk/" },
+      { type:"vocab", en:"foot", cn:"脚；步行", phonetic:"/fʊt/" },
+      { type:"sentence", en:"I usually go on foot.", cn:"我通常步行。" },
+      { type:"repeat", en:"I usually go on foot.", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"pause" },
+      { type:"vocab", en:"plane", cn:"飞机", phonetic:"/pleɪn/" },
+      { type:"vocab", en:"ship", cn:"（大）船", phonetic:"/ʃɪp/" },
+      { type:"vocab", en:"travel", cn:"旅行", phonetic:"/ˈtrævl/" },
+      { type:"vocab", en:"environment", cn:"自然环境", phonetic:"/ɪnˈvaɪrənmənt/" },
+      { type:"vocab", en:"health", cn:"健康", phonetic:"/helθ/" },
+      { type:"pause" },
+      { type:"quiz", en:"How do you say 地铁 in English?", cn:"underground", instruction:"💡 Answer: underground" },
+      { type:"quiz", en:"How do you say 自行车 in English?", cn:"bike", instruction:"💡 Answer: bike" },
+      { type:"title", en:"Vocabulary complete!", cn:"词汇训练完成！" },
+    ],
+    "Dialogue A": [
+      { type:"title", en:"Unit 5 Part A — Getting to School", cn:"第五单元 A部分 — 上学方式" },
+      { type:"pause" },
+      { type:"dialogue", en:"Hi, children. You're early today.", cn:"你好，孩子们。你们今天来得早。", speaker:"Miss White" },
+      { type:"dialogue", en:"Yes, we are.", cn:"是的。", speaker:"Binbin" },
+      { type:"dialogue", en:"Wonderful! How do you come to school?", cn:"太好了！你们怎么来学校的？", speaker:"Miss White" },
+      { type:"dialogue", en:"Sometimes my father brings me to school by car, but I often take the underground. It's fast.", cn:"有时候爸爸开车送我上学，但我经常坐地铁。地铁很快。", speaker:"Binbin" },
+      { type:"dialogue", en:"Yes. There is no traffic.", cn:"是的，不会堵车。", speaker:"Miss White" },
+      { type:"dialogue", en:"I often come by bus. How do you come to school, Miss White?", cn:"我经常坐公交车。怀特老师，您怎么来学校？", speaker:"Chen Jie" },
+      { type:"dialogue", en:"Sometimes I ride my bike, but I usually walk. I like to exercise.", cn:"有时候骑自行车，但通常步行。我喜欢锻炼。", speaker:"Miss White" },
+      { type:"pause" },
+      { type:"sentence", en:"How do you come to school?", cn:"你怎么来学校的？" },
+      { type:"repeat", en:"How do you come to school?", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"sentence", en:"I often take the underground.", cn:"我经常坐地铁。" },
+      { type:"repeat", en:"I often take the underground.", cn:"请跟读", instruction:"🎤 Your turn!" },
+      { type:"title", en:"Dialogue A complete!", cn:"A部分对话完成！" },
+    ],
+    "Dialogue B": [
+      { type:"title", en:"Unit 5 Part B — After School Plans", cn:"第五单元 B部分 — 放学后的计划" },
+      { type:"pause" },
+      { type:"dialogue", en:"Hi, Sarah. Where are you going?", cn:"嗨，Sarah。你要去哪里？", speaker:"Amy" },
+      { type:"dialogue", en:"I'm going to my dance class.", cn:"我要去上舞蹈课。", speaker:"Sarah" },
+      { type:"dialogue", en:"That sounds fun.", cn:"听起来很有趣。", speaker:"Amy" },
+      { type:"dialogue", en:"Yes. I go every Tuesday and Sunday. My class is in the city centre.", cn:"是的。我每周二和周日都去。我的课在市中心。", speaker:"Sarah" },
+      { type:"dialogue", en:"That's far. Are you going by bus?", cn:"那很远。你坐公交车去吗？", speaker:"Amy" },
+      { type:"dialogue", en:"Yes. A taxi is too expensive. What are you going to do?", cn:"是的。出租车太贵了。你打算做什么？", speaker:"Sarah" },
+      { type:"dialogue", en:"I'm going to visit my grandparents. We're going to watch a film together.", cn:"我要去看望爷爷奶奶。我们要一起看电影。", speaker:"Amy" },
+      { type:"dialogue", en:"My grandparents often choose old black and white films!", cn:"我的爷爷奶奶经常选老的黑白电影！", speaker:"Amy" },
+      { type:"dialogue", en:"That will be interesting!", cn:"那一定很有趣！", speaker:"Sarah" },
+      { type:"pause" },
+      { type:"sentence", en:"Where are you going?", cn:"你要去哪里？" },
+      { type:"repeat", en:"Where are you going?", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"title", en:"Unit 5 complete!", cn:"第五单元完成！" },
+    ],
+  },
+  6: {
+    "Vocabulary": [
+      { type:"title", en:"Unit 6 — Vocabulary Drill", cn:"第六单元 — 词汇训练" },
+      { type:"vocab", en:"internet", cn:"因特网；互联网", phonetic:"/ˈɪntənet/" },
+      { type:"vocab", en:"seafood", cn:"海鲜", phonetic:"/ˈsiːfuːd/" },
+      { type:"vocab", en:"maybe", cn:"或许；大概", phonetic:"/ˈmeɪbi/" },
+      { type:"vocab", en:"join", cn:"参与；加入", phonetic:"/dʒɔɪn/" },
+      { type:"pause" },
+      { type:"vocab", en:"explore", cn:"探索", phonetic:"/ɪkˈsplɔːr/" },
+      { type:"vocab", en:"culture", cn:"文化", phonetic:"/ˈkʌltʃər/" },
+      { type:"vocab", en:"hot pot", cn:"火锅", phonetic:"/hɒt pɒt/" },
+      { type:"vocab", en:"tour", cn:"旅行", phonetic:"/tʊər/" },
+      { type:"vocab", en:"local", cn:"当地的", phonetic:"/ˈləʊkl/" },
+      { type:"vocab", en:"history", cn:"历史", phonetic:"/ˈhɪstri/" },
+      { type:"vocab", en:"plan", cn:"计划", phonetic:"/plæn/" },
+      { type:"pause" },
+      { type:"quiz", en:"How do you say 火锅 in English?", cn:"hot pot", instruction:"💡 Answer: hot pot" },
+      { type:"quiz", en:"How do you say 探索 in English?", cn:"explore", instruction:"💡 Answer: explore" },
+      { type:"title", en:"Vocabulary complete!", cn:"词汇训练完成！" },
+    ],
+    "Dialogue A": [
+      { type:"title", en:"Unit 6 Part A — Summer Holiday Plans", cn:"第六单元 A部分 — 暑假计划" },
+      { type:"pause" },
+      { type:"dialogue", en:"Where are you going in the summer holidays, Zhang Peng?", cn:"张鹏，暑假你要去哪里？", speaker:"John" },
+      { type:"dialogue", en:"I'm going to Dalian with my family. And you?", cn:"我要和家人去大连。你呢？", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"I'll stay here. I can see everything on the internet.", cn:"我会待在这里。我可以在网上看到一切。", speaker:"John" },
+      { type:"dialogue", en:"I like to visit museums and take photos. And you can't eat fresh seafood online!", cn:"我喜欢参观博物馆和拍照。而且你不能在网上吃到新鲜的海鲜！", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"I see. But isn't travelling expensive?", cn:"我明白了。但旅行不是很贵吗？", speaker:"John" },
+      { type:"dialogue", en:"Sometimes, but it's fun and you can learn a lot.", cn:"有时候是的，但很有趣，你能学到很多东西。", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"That's right. When are you going to Dalian?", cn:"你说得对。你什么时候去大连？", speaker:"John" },
+      { type:"dialogue", en:"In July.", cn:"七月。", speaker:"Zhang Peng" },
+      { type:"dialogue", en:"OK. Maybe I can join you!", cn:"好的。也许我可以加入你们！", speaker:"John" },
+      { type:"pause" },
+      { type:"sentence", en:"Where are you going in the summer holidays?", cn:"暑假你要去哪里？" },
+      { type:"repeat", en:"Where are you going in the summer holidays?", cn:"请跟读", instruction:"🎤 Repeat!" },
+      { type:"title", en:"Dialogue A complete!", cn:"A部分对话完成！" },
+    ],
+    "Dialogue B": [
+      { type:"title", en:"Unit 6 Part B — Making a Plan", cn:"第六单元 B部分 — 制定旅行计划" },
+      { type:"pause" },
+      { type:"dialogue", en:"Sarah! We're going to make a travel plan. Can you help?", cn:"Sarah！我们要做一个旅行计划。你能帮忙吗？", speaker:"Mum" },
+      { type:"dialogue", en:"Yes, Mum. How can we make a good travel plan?", cn:"好的，妈妈。我们怎么做一个好的旅行计划？", speaker:"Sarah" },
+      { type:"dialogue", en:"Well, first, we need to choose where to go. Maybe we can go to Chongqing.", cn:"嗯，首先，我们需要选择去哪里。也许我们可以去重庆。", speaker:"Mum" },
+      { type:"dialogue", en:"OK. Great!", cn:"好的。太好了！", speaker:"Sarah" },
+      { type:"dialogue", en:"Then we need to choose how to get there.", cn:"然后我们需要选择怎么去。", speaker:"Mum" },
+      { type:"dialogue", en:"Many people take the fast train.", cn:"很多人坐高铁。", speaker:"Sarah" },
+      { type:"dialogue", en:"The fast train is a good idea!", cn:"坐高铁是个好主意！", speaker:"Dad" },
+      { type:"dialogue", en:"Next, we should look for hotels.", cn:"接下来，我们应该找酒店。", speaker:"Mum" },
+      { type:"dialogue", en:"I can look for hotels online. What else?", cn:"我可以在网上找酒店。还有什么？", speaker:"Dad" },
+      { type:"dialogue", en:"Finally, we should find out about the weather.", cn:"最后，我们应该了解天气情况。", speaker:"Mum" },
+      { type:"dialogue", en:"OK. I'll check my weather app. This will be a great holiday!", cn:"好的。我来查天气预报。这会是一个很棒的假期！", speaker:"Sarah" },
+      { type:"pause" },
+      { type:"sentence", en:"First, choose where to go. Then, choose how to get there. Next, look for hotels. Finally, find out about the weather.", cn:"首先选择去哪里。然后选择怎么去。接下来找酒店。最后了解天气。" },
+      { type:"repeat", en:"First, then, next, finally.", cn:"请跟读这四个顺序词", instruction:"🎤 Repeat the sequence words!" },
+      { type:"title", en:"All units complete! You're amazing!", cn:"所有单元完成！你太厉害了！🎉" },
+    ],
+  },
+};
+
+// ═══════════════════════════════════════════════════════════
+// SPEECH ENGINE
+// ═══════════════════════════════════════════════════════════
+
+let synth = window.speechSynthesis;
+let enVoice = null;
+let currentUnit = 1, currentLesson = "Vocabulary";
+let currentSteps = [], stepIndex = -1;
+let isPlaying = false, speed = 0.85;
+
+function loadVoices() {
+  const voices = synth.getVoices();
+  // Find best English voice
+  enVoice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) ||
+            voices.find(v => v.lang === 'en-US' && v.name.includes('Samantha')) ||
+            voices.find(v => v.lang === 'en-US') ||
+            voices.find(v => v.lang.startsWith('en'));
+
+  const status = document.getElementById('voiceStatus');
+  if (enVoice) {
+    status.textContent = 'READY';
+    status.className = 'voice-status ready';
+  } else {
+    status.textContent = 'NO VOICE';
+    status.className = 'voice-status error';
+  }
+}
+
+synth.onvoiceschanged = loadVoices;
+setTimeout(loadVoices, 500);
+
+function speak(text, lang='en', rate=1) {
+  return new Promise(resolve => {
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.voice = enVoice;
+    utter.lang = 'en-US';
+    utter.rate = rate * speed;
+    utter.pitch = 1.05;
+    utter.onend = resolve;
+    utter.onerror = resolve;
+    synth.speak(utter);
+  });
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLAYBACK ENGINE
+// ═══════════════════════════════════════════════════════════
+
+async function playStep(idx) {
+  if (idx < 0 || idx >= currentSteps.length || !isPlaying) return;
+  stepIndex = idx;
+  const step = currentSteps[idx];
+  updateDisplay(step);
+  updateProgress();
+  highlightScript(idx);
+
+  switch(step.type) {
+    case 'title':
+      await speak(step.en, 'en');
+      await wait(1200);
+      break;
+    case 'vocab':
+      await speak(step.en, 'en', 0.85);
+      await wait(300);
+      await speak(step.en, 'en', 0.7); // repeat slowly
+      await wait(1000);
+      break;
+    case 'sentence':
+      await speak(step.en, 'en');
+      await wait(1000);
+      break;
+    case 'dialogue':
+      await speak(step.en, 'en');
+      await wait(1000);
+      break;
+    case 'repeat':
+      await speak(step.en, 'en');
+      await wait(600);
+      await speak(step.en, 'en', 0.75); // slow repeat
+      await wait(2500); // pause for user to repeat
+      break;
+    case 'quiz':
+      await speak(step.en, 'en');
+      await wait(3000); // thinking time
+      await speak(step.cn, 'en'); // answer in English
+      await wait(800);
+      break;
+    case 'pause':
+      await wait(1200);
+      break;
+  }
+
+  if (isPlaying && idx + 1 < currentSteps.length) {
+    playStep(idx + 1);
+  } else if (idx + 1 >= currentSteps.length) {
+    stopPlay();
+  }
+}
+
+function updateDisplay(step) {
+  const idle = document.getElementById('idleState');
+  const wave = document.getElementById('waveBars');
+  const npStep = document.getElementById('npStep');
+  const npEn = document.getElementById('npEnglish');
+  const npCn = document.getElementById('npChinese');
+  const npPh = document.getElementById('npPhonetic');
+  const npInst = document.getElementById('npInstruction');
+
+  idle.style.display = 'none';
+  wave.classList.remove('hidden');
+
+  const labels = {
+    title: '📢 ANNOUNCEMENT', vocab: '📖 NEW WORD', sentence: '💬 KEY SENTENCE',
+    dialogue: '🗣️ DIALOGUE', repeat: '🎤 REPEAT AFTER ME', quiz: '🧠 QUICK QUIZ', pause: '⏸ PAUSE'
+  };
+
+  npStep.style.display = 'block';
+  npStep.textContent = step.speaker ? `🗣️ ${step.speaker}` : (labels[step.type] || '');
+
+  npEn.style.display = step.en ? 'block' : 'none';
+  npEn.textContent = step.en || '';
+
+  npCn.style.display = step.cn ? 'block' : 'none';
+  npCn.textContent = step.cn || '';
+
+  npPh.style.display = step.phonetic ? 'block' : 'none';
+  npPh.textContent = step.phonetic || '';
+
+  npInst.style.display = step.instruction ? 'flex' : 'none';
+  npInst.textContent = step.instruction || '';
+}
+
+function updateProgress() {
+  const pct = currentSteps.length > 0 ? ((stepIndex + 1) / currentSteps.length * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressCurrent').textContent = `${stepIndex + 1} / ${currentSteps.length}`;
+  document.getElementById('progressPct').textContent = Math.round(pct) + '%';
+}
+
+function highlightScript(idx) {
+  document.querySelectorAll('.script-item').forEach((el, i) => {
+    el.classList.toggle('current', i === idx);
+  });
+  const current = document.querySelector('.script-item.current');
+  if (current) current.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function togglePlay() {
+  if (isPlaying) {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playBtn').textContent = '▶';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('waveBars').classList.add('hidden');
+  } else {
+    isPlaying = true;
+    document.getElementById('playBtn').textContent = '⏸';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('waveBars').classList.remove('hidden');
+    if (stepIndex < 0 || stepIndex >= currentSteps.length - 1) stepIndex = -1;
+    playStep(stepIndex + 1);
+  }
+}
+
+function stopPlay() {
+  isPlaying = false;
+  synth.cancel();
+  stepIndex = -1;
+  document.getElementById('playBtn').textContent = '▶';
+  document.getElementById('playBtn').classList.remove('playing');
+  document.getElementById('waveBars').classList.add('hidden');
+}
+
+function skipNext() {
+  if (!isPlaying) return;
+  synth.cancel();
+}
+
+function skipPrev() {
+  if (!isPlaying || stepIndex <= 0) return;
+  synth.cancel();
+  stepIndex = Math.max(0, stepIndex - 2);
+}
+
+function replayCurrent() {
+  if (stepIndex < 0) return;
+  synth.cancel();
+  const wasPlaying = isPlaying;
+  isPlaying = true;
+  if (!wasPlaying) {
+    document.getElementById('playBtn').textContent = '⏸';
+    document.getElementById('playBtn').classList.add('playing');
+  }
+  playStep(stepIndex);
+}
+
+function setSpeed(s) {
+  speed = s;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === s));
+}
+
+// ═══════════════════════════════════════════════════════════
+// UI RENDERING
+// ═══════════════════════════════════════════════════════════
+
+function renderUnits() {
+  const grid = document.getElementById('unitGrid');
+  grid.innerHTML = UNITS.map(u => `
+    <div class="unit-btn ${u.id===1?'active':''}" onclick="selectUnit(${u.id})" data-unit="${u.id}">
+      <div class="unit-num">${u.id}</div>
+      <div class="unit-name">${u.name}</div>
+    </div>
+  `).join('');
+}
+
+function selectUnit(id) {
+  currentUnit = id;
+  stopPlay();
+  document.querySelectorAll('.unit-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.unit) === id));
+  const lessons = LESSON_DATA[id];
+  if (!lessons) return;
+  const keys = Object.keys(lessons);
+  currentLesson = keys[0];
+  renderLessonTabs(keys);
+  loadLesson();
+}
+
+function renderLessonTabs(keys) {
+  const tabs = document.getElementById('lessonTabs');
+  tabs.innerHTML = keys.map((k, i) => `
+    <button class="lesson-tab ${i===0?'active':''}" onclick="selectLesson('${k}', this)">${k}</button>
+  `).join('');
+}
+
+function selectLesson(name, btn) {
+  currentLesson = name;
+  stopPlay();
+  document.querySelectorAll('.lesson-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  loadLesson();
+}
+
+function loadLesson() {
+  const unit = UNITS.find(u => u.id === currentUnit);
+  currentSteps = LESSON_DATA[currentUnit]?.[currentLesson] || [];
+  stepIndex = -1;
+
+  document.getElementById('playerTitle').textContent = `Unit ${currentUnit}: ${currentLesson}`;
+  document.getElementById('playerSub').textContent = `${unit.name} · ${currentSteps.length} steps`;
+  document.getElementById('playerIcon').style.background = `linear-gradient(135deg, ${unit.color}, ${unit.color}cc)`;
+
+  // Reset display
+  document.getElementById('idleState').style.display = 'block';
+  document.getElementById('waveBars').classList.add('hidden');
+  ['npStep','npEnglish','npChinese','npPhonetic','npInstruction'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  updateProgress();
+  renderScript();
+}
+
+function renderScript() {
+  const list = document.getElementById('scriptList');
+  list.innerHTML = currentSteps.filter(s => s.en).map((s, i) => `
+    <div class="script-item" onclick="jumpTo(${i})">
+      <div class="script-idx">${i+1}</div>
+      <div>
+        <div class="script-text-en">${s.speaker ? `[${s.speaker}] ` : ''}${s.en}</div>
+        ${s.cn ? `<div class="script-text-cn">${s.cn}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function jumpTo(idx) {
+  synth.cancel();
+  stepIndex = idx - 1;
+  isPlaying = true;
+  document.getElementById('playBtn').textContent = '⏸';
+  document.getElementById('playBtn').classList.add('playing');
+  playStep(idx);
+}
+
+function toggleScript() {
+  document.getElementById('scriptList').classList.toggle('show');
+}
+
+// INIT
+renderUnits();
+selectUnit(1);
+</script>
+</body>
+</html>
